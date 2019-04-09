@@ -1,5 +1,5 @@
-import Events from '@arian/events'
-import FilesStore from '@arian/files-store'
+import Events from '@ariran/events'
+import FilesStore from '@ariran/files-store'
 
 const uploadList = Symbol('uploadList')
 

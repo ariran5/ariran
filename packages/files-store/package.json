@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@arian/events": "file:../events"
-  }
+    "@ariran/events": "file:../events"
+  },
+  "gitHead": "2bc259ab7bb66d8738288aeb68de50211540f09b"
 }

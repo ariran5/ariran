@@ -1,4 +1,4 @@
-import Events from '@arian/events'
+import Events from '@ariran/events'
 
 const filesSymbol = Symbol('files')
 const hasFile = Symbol('hasFile')
