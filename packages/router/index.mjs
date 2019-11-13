@@ -1,7 +1,8 @@
-import http1ToHttp2 from './http1ToHttp2.mjs';
+// import http1ToHttp2 from './http1ToHttp2.mjs';
 import http2 from 'http2';
 import nodePath from 'path'
-import url from 'url'
+
+import extendsStream from './lib/extendsStream.mjs'
 
 // TODO: сделать нейронку сервер пуша, что бы она обучалась отдавать файлы для страниц
 
@@ -14,33 +15,42 @@ const {
 
 const windowsSlashRegex = /\\/g
 
-function parseArgs(path, callback, ...args){
-
-  if ( path instanceof Function ) {
-    path = null;
-    [callback, ...args] = arguments;
-  }
-
-  if (path)
-    path = nodePath.join(this.basePath, path)
-
-  if (windowsSlashRegex.test(path))
-    path = path.replace(windowsSlashRegex, '/')
-  return {
-    path,
-    callback,
-    args
-  }
-}
-
 const _host = Symbol('host')
 
 class Router {
-  constructor( options = {}){
-    this.restFunctions = [];
+  restFunctions = []
 
+  constructor( options = {}){
     this.basePath = options.basePath || '/'
   }
+
+  parseArgs = (...fnArgs) => {
+    let [path, callback, ...args] = fnArgs
+
+    if ( path instanceof Function ) {
+      path = '/*';
+      [callback, ...args] = fnArgs
+    }
+    if (typeof path === 'string') {
+      path = nodePath.join(this.basePath, path)
+
+      if (~path.indexOf('*')) {
+        if (path[path.length - 1] !== '*') {
+          path = path.replace('/*', '')
+        }
+      }
+      
+      if (windowsSlashRegex.test(path))
+        path = path.replace(windowsSlashRegex, '/')
+    }
+  
+    return {
+      path,
+      callback,
+      args
+    }
+  }
+  
 
   http2 (stream, headers) {
 
@@ -54,15 +64,15 @@ class Router {
 
   http1 (request, response) {
 
-    if ( parseInt(request.httpVersion) >= 2 ) return;
+    // if ( parseInt(request.httpVersion) >= 2 ) return;
 
-    // если передается 1 аргумент то это кто-то передал руками опции
-    if (arguments.length == 1) {
-      this.parseOptions(request);
-    } else {
-      const {stream, headers} = http1ToHttp2(request, response);
-      return this.request(stream, headers);
-    }
+    // // если передается 1 аргумент то это кто-то передал руками опции
+    // if (arguments.length == 1) {
+    //   this.parseOptions(request);
+    // } else {
+    //   const {stream, headers} = http1ToHttp2(request, response);
+    //   return this.request(stream, headers);
+    // }
   }
 
   set host(value){
@@ -73,103 +83,28 @@ class Router {
     return this[_host]
   }
 
-  async request (stream, headers) {
+  request = async (...args) => {
+    let [stream, headers, ...arr] = args
+    stream = extendsStream(stream)
+
+    const newArgs = [stream, headers, ...arr]
 
     if (this[_host] && headers.host !== this[_host]) {
       return false
     }
 
-    const reqPath = headers[HTTP2_HEADER_PATH];
-    const reqMethod = headers[HTTP2_HEADER_METHOD];
-
-    for (var i = 0; i < this.restFunctions.length; i++) {
-      if ( stream.writable ) {
-        let Callback;
-        if (this.restFunctions[i] instanceof Function) {
-          Callback = this.restFunctions[i](...arguments)
-        } else {
-          Callback = runRoute( this.restFunctions[i] );
-        }
-
-        if ( Callback instanceof Promise) {
-          await Callback.catch(console.error);
-        }
+    for (const route of this.restFunctions) {
+      if ( !stream.writable ) {
+        return false
       }
 
+      const Callback = (route instanceof Function) ?
+        route(...newArgs):
+        this.runRoute( newArgs, route );
 
-    }
-
-    function runRoute({path, callback, args, method}) {
-
-      if ( method != reqMethod && method != "USE") {
-        return;
+      if ( Callback instanceof Promise) {
+        await Callback.catch(console.error);
       }
-
-      if (typeof path === 'string') {
-        var checkPathResult = checkPath(path, reqPath)
-      }
-
-      if (
-        !path ||
-         checkPathResult ||
-         path instanceof RegExp && path.test(reqPath)) {
-
-        const Callback =
-         callback(stream, headers, ...args, checkPathResult);
-         return Callback;
-
-      }
-
-      function checkPath(parsePath, parseReqPath) {
-
-        const regex = /:?[^/]+/gim
-        const [reqPath, query] = parseReqPath.split('?')
-
-        const matchedPath = (parsePath.split('?')[0]).match(regex) || []
-        const matchedReqPath = reqPath.match(regex) || []
-
-        if (matchedPath.length !== matchedReqPath.length) {
-          return false
-        }
-
-        const use = matchedPath.every((item, index) => {
-          if (matchedReqPath[index] === item) {
-            return true
-          } else if ( /:/.test(item) ) {
-            return true
-          } else {
-            return false
-          }
-        })
-
-        if (!use) return false
-
-        const options = {
-          params: {},
-          query: {}
-        }
-        matchedPath.reduce((reducer, item, index) => {
-          if (/:/.test(item)) {
-            const key = item.slice(1)
-            reducer.params[key] = matchedReqPath[index]
-          }
-          return reducer
-        }, options)
-
-        query && query
-          .split('&')
-          .reduce((reducer, item, index) => {
-            if (/=/.test(item)) {
-              const [key, value] = item.split('=')
-              reducer.query[key] = value
-            } else {
-              reducer.query[item] = true
-            }
-            return reducer
-          }, options)
-        return options
-      }
-
     }
   }
 
@@ -177,7 +112,7 @@ class Router {
     if ( !arguments.length ) {
       throw new Error('Пустой роут');
     }
-    const {path, callback, args} = parseArgs.call(this, ...arguments)
+    const { path, callback, args } = this.parseArgs(...arguments)
 
     this.restFunctions.push({
       method: "GET",
@@ -193,7 +128,7 @@ class Router {
     if ( !arguments.length ) {
       throw new Error('Пустой роут');
     }
-    const {path, callback, args} = parseArgs.call(this, ...arguments)
+    const {path, callback, args} = this.parseArgs(...arguments)
 
     this.restFunctions.push({
       method: "POST",
@@ -209,7 +144,7 @@ class Router {
     if ( !arguments.length ) {
       throw new Error('Пустой роут');
     }
-    const {path, callback, args} = parseArgs.call(this, ...arguments)
+    const {path, callback, args} = this.parseArgs(...arguments)
 
     this.restFunctions.push({
       method: "DELETE",
@@ -225,7 +160,7 @@ class Router {
     if ( !arguments.length ) {
       throw new Error('Пустой роут');
     }
-    const {path, callback, args} = parseArgs.call(this, ...arguments)
+    const {path, callback, args} = this.parseArgs(...arguments)
 
     this.restFunctions.push({
       method: "PUT",
@@ -241,15 +176,15 @@ class Router {
     if ( !arguments.length ) {
       throw new Error('Пустой роут');
     }
-    const {path, callback, args} = parseArgs.call(this, ...arguments)
+    const {path, callback, args} = this.parseArgs(...arguments)    
 
-    if (path && arguments.length == 1) {
+    if (path && !callback) {
       // вложенные вызовы через use
 
       const newRouter = new Router({
         basePath: path
       })
-      this.restFunctions.push(newRouter.request.bind(newRouter))
+      this.restFunctions.push(newRouter.request)
       return newRouter
     } else {
 
@@ -263,8 +198,129 @@ class Router {
     }
   }
 
+  parseCookie = (stream, cookiesString = '') => {
+    if (!cookiesString) {
+      return {}
+    }
+
+    const cookies =  Object.fromEntries(
+      cookiesString.split(/; */).map(cookie => {
+        return cookie.split('=')
+      })
+    )
+
+    return new Proxy(cookies, {
+      set(obj, key, value) {
+        
+        // console.log(stream.endAfterHeaders);
+        
+        // if (stream.endAfterHeaders) {
+        //   return false
+        // }
+        
+        Reflect.set(obj, key, value)
+        stream.additionalHeaders({
+          'set-cookie': `${key}=${value}`
+        })
+
+        return true
+      }
+    })
+  }
+
+  parsePath = (routePath, reqPathWithQuery) => {
+    const [reqPath, query = ''] = reqPathWithQuery.split('?')
+    let params
+
+    // Если регулярка и путь не прошел ее
+    if (routePath instanceof RegExp) {
+      params = reqPath.match(routePath)
+      
+      if (!params) {
+        return false
+      }
+
+    } else {
+      // поиск слов между слешами
+      const regex = /:?[^/]+/gim
+
+      const matchedPath = routePath.split('?')[0].match(regex) || []
+      const matchedReqPath = reqPath.match(regex) || []
+
+      for (let i = 0; i < (matchedPath.length || 1); i++) {
+        const item = matchedPath[i]
+        if (item === '*')
+          break
+
+        if (i === matchedPath.length - 1 && matchedPath.length !== matchedReqPath.length)
+          return false
+
+        if (/:/.test(item))
+          continue
+
+        if (matchedReqPath[i] !== item)
+          return false
+      }
+
+
+      params = this.parseParams(matchedPath, matchedReqPath)
+    }
+
+    return {
+      params,
+      query: this.parseQuery(query)
+    }
+  }
+
+  runRoute = (reqArgs, {path, method, callback, args}) => {
+
+    const [stream, headers] = reqArgs
+
+    const reqPath = headers[HTTP2_HEADER_PATH]
+    const reqMethod = headers[HTTP2_HEADER_METHOD]
+
+    if ( method !== reqMethod && method !== "USE") {
+      return;
+    }
+
+    const parsedPath = this.parsePath(path, reqPath)
+
+    if (parsedPath) {
+      
+      Object.assign(
+        stream.store,
+        parsedPath,
+        {
+          cookie: this.parseCookie(stream, headers['cookie'])
+        }
+      )
+
+      const Callback = callback(stream, headers, ...args);
+       return Callback;
+
+    }
+
+  }
+
+  parseParams = (matchedPath, matchedReqPath) => Object.fromEntries(
+    matchedPath
+      .map((item, index) => [item, matchedReqPath[index]])
+      .filter(([item]) => /:/.test(item))
+      .map(item => {
+        item[0] = item[0].slice(1)
+        return item
+      })
+  )
+
+  parseQuery = queryString => queryString
+    .split('&')
+    .map(item => item.split('='))
+    .filter(([key]) => key)
+    .reduce((acc, [key, value = true]) => {
+      acc[key] = value
+      return acc
+    }, {})
+
 }
 export default Router
 export const router = new Router();
-export const http2Request = router.http2.bind(router);
-export const http1Request = router.http1.bind(router);
