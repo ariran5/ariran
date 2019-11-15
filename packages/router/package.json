@@ -4,6 +4,7 @@
   "description": "",
   "main": "./cjs/index.js",
   "exports": {
+    ".": "./cjs/index.js",
     "./esm": "./esm/index.mjs"
   },
   "module": "./esm/index.mjs",
