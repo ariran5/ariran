@@ -1,8 +1,7 @@
-// import http1ToHttp2 from './http1ToHttp2.mjs';
-import http2 from 'http2';
-import nodePath from 'path'
+const http2 = require('http2')
+const nodePath = require('path')
 
-import extendsStream from './lib/extendsStream.mjs'
+const extendsStream = require('./lib/extendsStream.js')
 
 // TODO: сделать нейронку сервер пуша, что бы она обучалась отдавать файлы для страниц
 
@@ -322,5 +321,7 @@ class Router {
     }, {})
 
 }
-export default Router
-export const router = new Router();
+module.exports = {
+  default: Router,
+  router: new Router()
+}
