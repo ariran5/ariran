@@ -1,0 +1,16 @@
+{
+  "name": "@ariran/http-transform",
+  "version": "0.0.0",
+  "description": "",
+  "main": "./cjs/index.js",
+  "exports": {
+    ".": "./cjs/index.js",
+    "./esm": "./esm/index.mjs"
+  },
+  "module": "./esm/index.mjs",
+  "scripts": {
+    "test1": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
