@@ -18,13 +18,13 @@ module.exports = stream => {
       )
       
       if (key in MethodsForStream) {
-        const value = Reflect.get(MethodsForStream, key, value)
-        return typeof value == 'function' ? value.bind(obj): value
+        const result = Reflect.get(MethodsForStream, key, value)
+        return typeof result == 'function' ? result.bind(obj): result
       }
 
       if (key in stream) {
-        const value = Reflect.get(obj, key, value)
-        return typeof value == 'function' ? value.bind(obj): value
+        const result = Reflect.get(obj, key, value)
+        return typeof result == 'function' ? result.bind(obj): result
       }
 
     }
