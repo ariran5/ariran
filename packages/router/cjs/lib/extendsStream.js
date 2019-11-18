@@ -11,16 +11,20 @@ module.exports = stream => {
   return new Proxy(stream, {
     get(obj, key, value) {
 
-      if (key in MethodsForStream && key in obj) {
-        console.error( 'Добавленное свойство имеется в объекте stream: ', key )
-      }
+      console.assert(
+        !(key in MethodsForStream && key in obj),
+        'Добавленное свойство имеется в объекте stream: ',
+        key
+      )
       
       if (key in MethodsForStream) {
-        return Reflect.get(MethodsForStream, key, value)
+        const value = Reflect.get(MethodsForStream, key, value)
+        return typeof value == 'function' ? value.bind(obj): value
       }
 
       if (key in stream) {
-        return Reflect.get(obj, key, value)
+        const value = Reflect.get(obj, key, value)
+        return typeof value == 'function' ? value.bind(obj): value
       }
 
     }
