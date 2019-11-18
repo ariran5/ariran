@@ -96,7 +96,7 @@ function respondWithFile(url, headers, options = {}) {
     .then( stat => {
       if ( !stat.isFile() ) return Promise.reject('is directory');
 
-      options.checkStat && options.checkStat(stat)
+      options.statCheck && options.statCheck(stat)
 
       setHeaders.call(this, headers);
       const readStream = fs.createReadStream(url);
