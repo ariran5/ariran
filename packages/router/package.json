@@ -2,11 +2,8 @@
   "name": "@ariran/router",
   "version": "0.2.3",
   "description": "",
-  "main": "./cjs/index.js",
-  "exports": {
-    ".": "./cjs/index.js",
-    "./esm": "./esm/index.mjs"
-  },
+  "type": "commonjs",
+  "main": "./esm/index.mjs",
   "module": "./esm/index.mjs",
   "scripts": {
     "test1": "echo \"Error: no test specified\" && exit 1"
