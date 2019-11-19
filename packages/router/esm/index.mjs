@@ -101,8 +101,10 @@ class Router {
         route(...newArgs):
         this.runRoute( newArgs, route );
 
-      if ( Callback instanceof Promise) {
-        await Callback.catch(console.error);
+      try {
+        await Callback
+      } catch (err) {
+        console.error(err);
       }
     }
   }

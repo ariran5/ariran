@@ -7,6 +7,9 @@ const {
 } = STR
 
 module.exports = stream => {
+  if ('store' in stream) {
+    return stream
+  }
 
   return new Proxy(stream, {
     get(obj, key, value) {

@@ -3,6 +3,10 @@ const fs = require('fs')
 // todo stream to req,res + proxy
 
 module.exports = function(request, response) {
+  if (parseInt(request.httpVersion) >= 2) {
+    return
+  }
+
   const stream = response;
   const headers = Object.assign({}, request.headers);
   headers[":path"] = request.url;

@@ -6,6 +6,9 @@ const {
 } = STR
 
 export default stream => {
+  if ('store' in stream) {
+    return stream
+  }
 
   return new Proxy(stream, {
     get(obj, key, value) {
