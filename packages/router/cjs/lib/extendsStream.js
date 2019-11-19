@@ -19,17 +19,19 @@ module.exports = stream => {
         'Добавленное свойство имеется в объекте stream: ',
         key
       )
+
+      if (key in stream) {
+        const result = Reflect.get(obj, key, value)
+        return typeof result == 'function' ? result.bind(obj): result
+      }
       
       if (key in MethodsForStream) {
         const result = Reflect.get(MethodsForStream, key, value)
         return typeof result == 'function' ? result.bind(obj): result
       }
 
-      if (key in stream) {
-        const result = Reflect.get(obj, key, value)
-        return typeof result == 'function' ? result.bind(obj): result
-      }
-
+      const result = Reflect.get(obj, key, value)
+      return typeof result == 'function' ? result.bind(obj): result
     }
   })
 }
