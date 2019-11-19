@@ -63,8 +63,19 @@ export default function(request, response) {
     stream.end()
   });
 
+  const proxy = new Proxy(stream, {
+    get(obj, key, value) {
+      if (key === 'writable') {
+        return !obj.finished
+      }
+
+      const result = Reflect.get(...arguments)
+      return typeof result === 'function' ? result.bind(obj): result
+    }
+  })
+
   return [
-    stream,
+    proxy,
     headers
   ]
 }
