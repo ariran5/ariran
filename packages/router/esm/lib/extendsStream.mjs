@@ -20,7 +20,7 @@ export default stream => {
       )
 
       if (key in stream) {
-        const result = Reflect.get(obj, key, value)
+        const result = obj[key]
         return typeof result == 'function' ? result.bind(obj): result
       }
       
@@ -29,7 +29,7 @@ export default stream => {
         return typeof result == 'function' ? result.bind(obj): result
       }
 
-      const result = Reflect.get(obj, key, value)
+      const result = obj[key]
       return typeof result == 'function' ? result.bind(obj): result
     }
   })
