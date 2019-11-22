@@ -4,6 +4,7 @@ import nodePath from 'path'
 import extendsStream from './lib/extendsStream.mjs'
 
 // TODO: сделать нейронку сервер пуша, что бы она обучалась отдавать файлы для страниц
+// TODO: Сделать чтоб методы get use... можно было деструктуризировать
 
 const {
     HTTP2_HEADER_PATH,
@@ -21,6 +22,9 @@ class Router {
 
   constructor( options = {}){
     this.basePath = options.basePath || '/'
+
+    if (options.restFunctions)
+      this.restFunctions = options.restFunctions
   }
 
   parseArgs = (...fnArgs) => {
@@ -51,28 +55,28 @@ class Router {
   }
   
 
-  http2 (stream, headers) {
+  // http2 (stream, headers) {
 
-    // если передается 1 аргумент то это кто-то передал руками опции
-    if (arguments.length == 1) {
-      this.parseOptions(stream);
-    } else {
-      return this.request(stream, headers);
-    }
-  }
+  //   // если передается 1 аргумент то это кто-то передал руками опции
+  //   if (arguments.length == 1) {
+  //     this.parseOptions(stream);
+  //   } else {
+  //     return this.request(stream, headers);
+  //   }
+  // }
 
-  http1 (request, response) {
+  // http1 (request, response) {
 
-    // if ( parseInt(request.httpVersion) >= 2 ) return;
+  //   // if ( parseInt(request.httpVersion) >= 2 ) return;
 
-    // // если передается 1 аргумент то это кто-то передал руками опции
-    // if (arguments.length == 1) {
-    //   this.parseOptions(request);
-    // } else {
-    //   const {stream, headers} = http1ToHttp2(request, response);
-    //   return this.request(stream, headers);
-    // }
-  }
+  //   // // если передается 1 аргумент то это кто-то передал руками опции
+  //   // if (arguments.length == 1) {
+  //   //   this.parseOptions(request);
+  //   // } else {
+  //   //   const {stream, headers} = http1ToHttp2(request, response);
+  //   //   return this.request(stream, headers);
+  //   // }
+  // }
 
   set host(value){
     this[_host] = value
@@ -97,12 +101,12 @@ class Router {
         return false
       }
 
-      const Callback = (route instanceof Function) ?
-        route(...newArgs):
-        this.runRoute( newArgs, route );
-
       try {
-        await Callback
+        const Callback = this.runRoute( newArgs, route );
+
+        if (Callback instanceof Promise)
+          await Callback
+
       } catch (err) {
         console.error(err);
       }
@@ -183,9 +187,9 @@ class Router {
       // вложенные вызовы через use
 
       const newRouter = new Router({
-        basePath: path
+        basePath: path,
+        restFunctions: this.restFunctions
       })
-      this.restFunctions.push(newRouter.request)
       return newRouter
     } else {
 
