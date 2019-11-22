@@ -40,39 +40,74 @@ module.exports = function(request, response) {
     })
   }
 
-  stream.closed = false;
-  request.on('data', (...args) => {
-    response.emit('data',...args)
-  })
+  // stream.closed = false;
+  // request.on('data', (...args) => {
+  //   response.emit('data',...args)
+  // })
 
-  request.on('end', (...args) => {
-    response.emit('end',...args)
-  })
+  // request.on('end', (...args) => {
+  //   response.emit('end',...args)
+  // })
 
 
-  stream.aborted = false;
-  request.on('abort', () => {
-    stream.aborted = true
-    stream.emit('abort')
-  })
+  // stream.aborted = false;
+  // request.on('abort', () => {
+  //   stream.aborted = true
+  //   stream.emit('abort')
+  // })
 
-  request.on( 'close', event => {
-    stream.end()
-  });
-  request.on( 'error', event => {
-    stream.end()
-  });
+  // request.on( 'close', event => {
+  //   stream.end()
+  // });
+  // request.on( 'error', event => {
+  //   stream.end()
+  // });
+
+  request.pause()
+
+  setTimeout(() => {
+    request.resume()
+  }, 0)
 
   const proxy = new Proxy(stream, {
-    get(obj, key, value) {
-      if (key === 'writable') {
-        return !obj.finished
+    get(obj, key, reciver) {
+      
+      if (key === 'on') {
+        
+        const addListener = obj[key]
+        return new Proxy(addListener, {
+          apply(fn, context, args) {
+            const [eventType] = args
+
+            if ([
+              'close',
+              'data',
+              'end',
+              'pause',
+              'readable',
+              'resume',
+            ].includes(eventType)) {
+              return request.on(...args)
+            }
+
+            if (eventType === 'error') {
+              request.on(...args)
+              response.on(...args)
+            }
+
+            return response.on(...args)
+          }
+        })
+      } else if (key === 'pipe') {
+        return Reflect.get(request, key, reciver).bind(request)
       }
 
-      const result = Reflect.get(...arguments)
-      return typeof result === 'function' ? result.bind(obj): result
+      const result = Reflect.get(obj, key, reciver)
+      return (typeof result === 'function') ? result.bind(obj): result
     }
   })
+  
+  proxy.on('data', data => console.log(data.toString(), '====='))
 
   return [
     proxy,
@@ -111,7 +146,7 @@ function respondWithFile(url, headers, options = {}) {
     .then( stat => {
       if ( !stat.isFile() ) return Promise.reject('is directory');
 
-      options.statCheck && options.statCheck(stat)
+      options.checkStat && options.checkStat(stat)
 
       setHeaders.call(this, headers);
       const readStream = fs.createReadStream(url);
@@ -139,3 +174,4 @@ function setHeaders(headers = {}) {
   }
 
 }
+
