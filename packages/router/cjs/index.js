@@ -328,5 +328,6 @@ class Router {
 }
 module.exports = {
   default: Router,
-  router: new Router()
+  router: new Router(),
+  getBody: require('./lib/getBody').getBody
 }

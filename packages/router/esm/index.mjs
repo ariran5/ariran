@@ -2,6 +2,7 @@ import http2 from 'http2';
 import nodePath from 'path'
 
 import extendsStream from './lib/extendsStream.mjs'
+export { getBody } from './lib/getBody.mjs'
 
 // TODO: сделать нейронку сервер пуша, что бы она обучалась отдавать файлы для страниц
 // TODO: Сделать чтоб методы get use... можно было деструктуризировать
