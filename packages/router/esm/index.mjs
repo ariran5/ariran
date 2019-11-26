@@ -318,14 +318,29 @@ class Router {
       })
   )
 
-  parseQuery = queryString => queryString
-    .split('&')
-    .map(item => item.split('='))
-    .filter(([key]) => key)
-    .reduce((acc, [key, value = true]) => {
-      acc[key] = value
-      return acc
-    }, {})
+  parseQuery = queryString => {
+    const query = queryString
+      .split('&')
+      .map(item => item.split('='))
+      .filter(([key]) => key)
+      .reduce((acc, [key, value = true]) => {
+        acc[key] = value
+        return acc
+      }, {})
+    
+    Object.defineProperty(query, 'toString', {
+      value(){
+        return Object.entries(this)
+          .map(item => item.filter(item => !(typeof item === 'boolean')))
+          .map(item => item.join('='))
+          .join('&')
+      },
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    })
+    return query
+  }
 
 }
 export default Router
