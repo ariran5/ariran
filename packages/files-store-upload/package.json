@@ -1,6 +1,6 @@
 {
   "name": "@ariran/files-store-upload",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "index.mjs",
   "scripts": {
