@@ -3,6 +3,7 @@ node_modules
 /dist
 /data
 /server/data/files
+lerna-debug.log
 
 # local env files
 .env.local
