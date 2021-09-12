@@ -1,0 +1,31 @@
+{
+  "name": "@ariran/utils",
+  "version": "0.0.0",
+  "description": "utils and types",
+  "keywords": [
+    "utils"
+  ],
+  "author": "aria-n <aria-n@mail.ru>",
+  "homepage": "https://github.com/ariran5/ariran#readme",
+  "license": "ISC",
+  "main": "index.ts",
+  "directories": {
+    "lib": "lib",
+    "types": "types",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib",
+    "types"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ariran5/ariran.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/ariran5/ariran/issues"
+  }
+}

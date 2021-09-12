@@ -7,8 +7,16 @@ export default class Events {
   constructor(){
     this[listeners] = new Map()
   }
-  on(name, fn){
 
+  once(name, fn) {
+    const cb = () => {
+      fn()
+      this.off(name, fn)
+    }
+    this.on(name, cb)
+  }
+
+  on(name, fn){
     this[nameToArray](name).forEach(name => {
       if ( !this[listeners].get(name) ){
         this[listeners].set(name, (new Set()))
