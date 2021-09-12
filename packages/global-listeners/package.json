@@ -1,0 +1,30 @@
+{
+  "name": "@ariran/global-listeners",
+  "version": "0.0.0",
+  "description": "global listeners (click and esc)",
+  "keywords": [
+    "global",
+    "listeners"
+  ],
+  "author": "aria-n <aria-n@mail.ru>",
+  "homepage": "https://github.com/ariran5/ariran#readme",
+  "license": "ISC",
+  "main": "lib/global-listeners.ts",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ariran5/ariran.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/ariran5/ariran/issues"
+  }
+}
