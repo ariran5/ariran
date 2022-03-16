@@ -10,7 +10,7 @@ const listeners: IListener[] = []
  * event.composedPath()
  */
 
-globalThis?.addEventListener('click', (event) => {
+globalThis?.addEventListener?.('click', (event) => {
   function isClickInside(event: IEvent, el: IIgnoredElement) {
     if (el instanceof Function) {
       el = el()
@@ -19,11 +19,10 @@ globalThis?.addEventListener('click', (event) => {
     if (!el) {
       return
     }
-    // chrome exclusive
-    // @ts-ignore
-    if (event.path) {
-      // @ts-ignore
-      return event.path.includes(el)
+
+    const composedPath = event.composedPath?.()
+    if (composedPath) {
+      return composedPath.includes(el)
     }
 
     const target = event.target as HTMLElement
@@ -92,7 +91,7 @@ export function clickOutside(
 
 const keyListeners: Function[][] = []
 
-globalThis?.addEventListener('keyup', (event) => {
+globalThis?.addEventListener?.('keyup', (event) => {
   keyListeners.forEach(([cb]) => {
     cb(event)
   })
