@@ -3,6 +3,7 @@ export interface IProps<T extends IItem> {
   value: T[]
   item: T
   multiple: boolean
+  isCheckbox?: boolean
 }
 
 export interface IItem {
@@ -15,6 +16,7 @@ export function toggleItem<T extends IItem>({
   value,
   item,
   multiple = false,
+  isCheckbox = false
 }: IProps<T>) {
   let newVal = value.slice()
 
@@ -23,8 +25,11 @@ export function toggleItem<T extends IItem>({
     newVal.splice(0, newVal.length)
     newVal.push(item)
   } else if (isActive(item, value)) {
-    const index = newVal.findIndex((i) => i.value === item.value)
-    index + 1 && newVal.splice(index, 1) // если есть индекс
+    if (value.length === 1 && !isCheckbox) {
+    } else {
+      const index = newVal.findIndex((i) => i.value === item.value)
+      index + 1 && newVal.splice(index, 1) // если есть индекс
+    }
   } else {
     !multiple && newVal.splice(0, newVal.length)
 
